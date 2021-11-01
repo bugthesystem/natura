@@ -1,17 +1,108 @@
+/// This file defines a simplified damped harmonic oscillator, colloquially
+/// known as a spring. This is ported from Ryan Juckett’s simple damped harmonic
+/// motion, originally written in C++.
+///
+/// Example usage:
+///
+///```
+/// use natura::{Spring, Vector, Point};
+/// // Run once to initialize.
+/// let mut spring = Spring::new(natura::fps(60), 6.0, 0.5);
+///
+/// // Update on every frame.
+/// let mut pos = 0.0;
+/// let mut velocity = 0.0;
+/// const TARGET_POS:f64 = 100.0;
+/// some_update_loop(|| {
+///    let (pos_new, velocity_new) = spring.update(pos, velocity, TARGET_POS);
+/// });
+///```
+//
+// For background on the algorithm see:
+// https://www.ryanjuckett.com/damped-springs/
+
+/******************************************************************************
+  Copyright (c) 2008-2012 Ryan Juckett
+  http://www.ryanjuckett.com/
+  This software is provided 'as-is', without any express or implied
+  warranty. In no event will the authors be held liable for any damages
+  arising from the use of this software.
+  Permission is granted to anyone to use this software for any purpose,
+  including commercial applications, and to alter it and redistribute it
+  freely, subject to the following restrictions:
+  1. The origin of this software must not be misrepresented; you must not
+     claim that you wrote the original software. If you use this software
+     in a product, an acknowledgment in the product documentation would be
+     appreciated but is not required.
+  2. Altered source versions must be plainly marked as such, and must not be
+     misrepresented as being the original software.
+  3. This notice may not be removed or altered from any source
+     distribution.
+********************************************************************************/
+
 use std::fmt;
 use std::fmt::Formatter;
 use std::time::Duration;
 
+/// Spring contains a cached set of motion parameters that can be used to
+/// efficiently update multiple springs using the same time step, angular
+/// frequency and damping ratio.
+///
+/// To use a Spring call ::new with the time delta (that's animation frame
+/// length), frequency, and damping parameters, cache the result, then call
+/// Update to update position and velocity values for each spring that needs
+/// updating.
+///
+/// # Example:
+///
+/// ```
+/// use natura::{Spring, fps};
+///
+/// // First precompute spring coefficients based on your settings:
+/// let x:f64 =0.0;
+/// let x_vel:f64 = 0.0;
+/// let y:f64 = 0.0;
+/// let y_vel:f64 = 0.0;
+///
+/// delta_time = fps(60);
+/// let mut s = Spring::new(delta_time, 5.0, 0.2);
+///
+/// // Then, in your update loop:
+/// let (x_new, x_vel_new) = s.update(x, x_vel, 10.0); // update the X position
+/// let (y_new, y_vel_new) = s.update(y, y_vel, 20.0); // update the Y position
+///
 #[derive(Default)]
 pub struct Spring {
+    ///
     pos_pos_coef: f64,
+
+    ///
     pos_vel_coef: f64,
+
+    ///
     vel_pos_coef: f64,
+
+    ///
     vel_vel_coef: f64,
 }
 
+/// In calculus ε is, in vague terms, an arbitrarily small positive number. In
+/// the original C++ source ε is represented as such:
+/// `const float epsilon = 0.0001`;
+///
 const EPSILON: f64 = 0.00000001;
 
+/// fps returns a time delta for a given number of frames per second. This
+/// value can be used as the time delta when initializing a Spring. Note that
+/// game engines often provide the time delta as well, which you should use
+/// instead of this function, if possible.
+///
+/// Example:
+/// ```
+/// use natura::{Spring, fps};
+///
+/// let mut spring = Spring::new(fps(60), 5.0, 0.2);
+/// ```
 pub fn fps(n: u64) -> f64 {
     let duration = Duration::new(0, n as u32).as_nanos();
     let second = Duration::from_secs(1).as_nanos();
@@ -22,6 +113,29 @@ pub fn fps(n: u64) -> f64 {
 }
 
 impl Spring {
+    /// new initializes a new Spring, computing the parameters needed to
+    /// simulate a damped spring over a given period of time.
+    ///
+    /// The delta time is the time step to advance; essentially the framerate.
+    ///
+    /// The angular frequency is the angular frequency of motion, which affects the
+    /// speed.
+    ///
+    /// The damping ratio is the damping ratio of motion, which determines the
+    /// oscillation, or lack thereof. There are three categories of damping ratios:
+    ///
+    /// Damping ratio > 1: over-damped.
+    /// Damping ratio = 1: critically-damped.
+    /// Damping ratio < 1: under-damped.
+    ///
+    /// An over-damped spring will never oscillate, but reaches equilibrium at
+    /// a slower rate than a critically damped spring.
+    ///
+    /// A critically damped spring will reach equilibrium as fast as possible
+    /// without oscillating.
+    ///
+    /// An under-damped spring will reach equilibrium the fastest, but also
+    /// overshoots it and continues to oscillate as its amplitude decays over time.
     pub fn new(delta_time: f64, mut angular_frequency: f64, mut damping_ratio: f64) -> Self {
         let mut spring = Spring::default();
 
@@ -53,8 +167,8 @@ impl Spring {
         return spring;
     }
 
-    // update updates position and velocity values against a given target value.
-    // Call this after calling new_spring to update values.
+    /// update updates position and velocity values against a given target value.
+    /// call this after calling [Spring::new] to update values.
     pub fn update(&mut self, pos: f64, vel: f64, equilibrium_pos: f64) -> (f64, f64) {
         let old_pos = pos - equilibrium_pos; // update in equilibrium relative space
         let old_vel = vel;
@@ -65,7 +179,7 @@ impl Spring {
         return (new_pos, new_vel);
     }
 
-    #[inline]
+    #[inline(always)]
     fn calculate_critically_damped(delta_time: f64, angular_frequency: f64, spring: &mut Spring) {
         let exp_term = (-angular_frequency * delta_time).exp(); // math.Exp(-angular_frequency * delta_time);
         let time_exp = delta_time * exp_term;
@@ -78,7 +192,7 @@ impl Spring {
         spring.vel_vel_coef = -time_exp_freq + exp_term
     }
 
-    #[inline]
+    #[inline(always)]
     fn calculate_under_damped(delta_time: f64, angular_frequency: f64, damping_ratio: f64, spring: &mut Spring) {
         let omega_zeta = angular_frequency * damping_ratio;
         let alpha = angular_frequency * (1.0 - damping_ratio * damping_ratio).sqrt();
@@ -101,7 +215,7 @@ impl Spring {
         spring.vel_vel_coef = exp_cos - exp_omega_zeta_sin_over_alpha
     }
 
-    #[inline]
+    #[inline(always)]
     fn calculate_over_damped(delta_time: f64, angular_frequency: f64, damping_ratio: f64, spring: &mut Spring) {
         let za = -angular_frequency * damping_ratio;
         let zb = angular_frequency * (damping_ratio * damping_ratio - 1.0).sqrt();
