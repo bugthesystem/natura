@@ -1,0 +1,7 @@
+[workspace]
+members = [
+    "natura",
+    "natura-samples",
+    "natura-samples-coffee"
+]
+
