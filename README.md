@@ -5,7 +5,7 @@ A simple, efficient spring animation library for smooth, natural motion in Rust
 
 ## Usage
 
-Harmonica is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L138) with your settings to initialize and [`update`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L171) on each frame to animate.
+Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L138) with your settings to initialize and [`update`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L171) on each frame to animate.
 
 For details, see the [examples](/examples)
 
