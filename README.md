@@ -3,7 +3,8 @@ A simple, efficient spring animation library for smooth, natural motion in Rust
 
 ![](misc/demo.gif)
 
-## USAGE
+## Examples
+- `cargo run -p simple`
 ```rust
 // A thing we want to animate.
 #[derive(Default)]
@@ -44,9 +45,9 @@ fn main() {
 }
 ```
 
+- `cargo run -p coffee-2d`  
+  Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
 
-## Examples
-- Example with [2D engine `coffee`](https://github.com/hecrj/coffee) 
 ```rust
 use std::fmt;
 use std::fmt::Formatter;

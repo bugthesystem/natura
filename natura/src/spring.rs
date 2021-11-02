@@ -39,7 +39,6 @@
   3. This notice may not be removed or altered from any source
      distribution.
 ********************************************************************************/
-
 use std::fmt;
 use std::fmt::Formatter;
 use std::time::Duration;
@@ -193,7 +192,12 @@ impl Spring {
     }
 
     #[inline(always)]
-    fn calculate_under_damped(delta_time: f64, angular_frequency: f64, damping_ratio: f64, spring: &mut Spring) {
+    fn calculate_under_damped(
+        delta_time: f64,
+        angular_frequency: f64,
+        damping_ratio: f64,
+        spring: &mut Spring,
+    ) {
         let omega_zeta = angular_frequency * damping_ratio;
         let alpha = angular_frequency * (1.0 - damping_ratio * damping_ratio).sqrt();
 
@@ -207,7 +211,6 @@ impl Spring {
         let exp_cos = exp_term * cos_term;
         let exp_omega_zeta_sin_over_alpha = exp_term * omega_zeta * sin_term * inv_alpha;
 
-
         spring.pos_pos_coef = exp_cos + exp_omega_zeta_sin_over_alpha;
         spring.pos_vel_coef = exp_sin * inv_alpha;
 
@@ -216,7 +219,12 @@ impl Spring {
     }
 
     #[inline(always)]
-    fn calculate_over_damped(delta_time: f64, angular_frequency: f64, damping_ratio: f64, spring: &mut Spring) {
+    fn calculate_over_damped(
+        delta_time: f64,
+        angular_frequency: f64,
+        damping_ratio: f64,
+        spring: &mut Spring,
+    ) {
         let za = -angular_frequency * damping_ratio;
         let zb = angular_frequency * (damping_ratio * damping_ratio - 1.0).sqrt();
         let z1 = za - zb;
@@ -233,7 +241,6 @@ impl Spring {
         let z1e1_over_two_zb = z1 * e1_over_two_zb;
         let z2e2_over_two_zb = z2 * e2_over_two_zb;
 
-
         spring.pos_pos_coef = e1_over_two_zb * z2 - z2e2_over_two_zb + e2;
         spring.pos_vel_coef = -e1_over_two_zb + e2_over_two_zb;
 
@@ -244,7 +251,10 @@ impl Spring {
 
 impl fmt::Display for Spring {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f, "Sprite pos_pos_coef:{}, pos_vel_coef:{}, vel_pos_coef:{}, vel_vel_coef:{}",
-               self.pos_pos_coef, self.pos_vel_coef, self.vel_pos_coef, self.vel_vel_coef)
+        write!(
+            f,
+            "Sprite pos_pos_coef:{}, pos_vel_coef:{}, vel_pos_coef:{}, vel_vel_coef:{}",
+            self.pos_pos_coef, self.pos_vel_coef, self.vel_pos_coef, self.vel_vel_coef
+        )
     }
 }

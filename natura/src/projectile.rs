@@ -31,7 +31,6 @@ pub struct Projectile<'a> {
     /// position on a plane
     pos: &'a mut Point,
     /// velocity of the projectile
-
     vel: &'a mut Vector,
     /// acceleration of projectile
     acc: &'a mut Vector,
@@ -68,13 +67,19 @@ pub struct Vector {
 ///   └───── ±x     └───── ±x
 ///
 /// (i.e. origin is located in the bottom-left corner)
-pub const GRAVITY: Vector = Vector { x: 0.0, y: -9.81, z: 0.0 };
-
+pub const GRAVITY: Vector = Vector {
+    x: 0.0,
+    y: -9.81,
+    z: 0.0,
+};
 
 /// TERMINAL_GRAVITY is a utility vector that represents gravity where the
 /// coordinate plane's origin is on the top-right corner
-pub const TERMINAL_GRAVITY: Vector = Vector { x: 0.0, y: 9.81, z: 0.0 };
-
+pub const TERMINAL_GRAVITY: Vector = Vector {
+    x: 0.0,
+    y: 9.81,
+    z: 0.0,
+};
 
 impl Projectile<'_> {
     /// new creates a new projectile. It accepts a frame rate and initial
@@ -103,10 +108,12 @@ impl Projectile<'_> {
     ///     initial_velocity.borrow_mut(),
     ///     initial_acceleration.borrow_mut());
     /// ```
-    pub fn new<'a>(delta_time: &'a f64,
-                   initial_position: &'a mut Point,
-                   initial_velocity: &'a mut Vector,
-                   initial_acceleration: &'a mut Vector) -> Projectile<'a> {
+    pub fn new<'a>(
+        delta_time: &'a f64,
+        initial_position: &'a mut Point,
+        initial_velocity: &'a mut Vector,
+        initial_acceleration: &'a mut Vector,
+    ) -> Projectile<'a> {
         return Projectile {
             pos: initial_position,
             vel: initial_velocity,
@@ -137,42 +144,85 @@ impl Projectile<'_> {
 
 #[cfg(test)]
 mod tests {
-    use std::borrow::{Borrow, BorrowMut};
-    use crate::{Projectile, Point, Vector};
+    use crate::{Point, Projectile, Vector};
+    use std::borrow::BorrowMut;
 
     #[test]
     fn test_update_gravity() {
         let fps = 60;
         let time = &crate::fps(fps);
-        let mut initial_acceleration = Vector { x: 0.0, y: 9.81, z: 0.0 };
-        let mut initial_position = Point { x: 0.0, y: 0.0, z: 0.0 };
-        let mut initial_velocity = Vector { x: 5.0, y: 5.0, z: 0.0 };
-        let mut projectile = Projectile::new(time,
-                                             initial_position.borrow_mut(),
-                                             initial_velocity.borrow_mut(),
-                                             initial_acceleration.borrow_mut());
-
+        let mut initial_acceleration = Vector {
+            x: 0.0,
+            y: 9.81,
+            z: 0.0,
+        };
+        let mut initial_position = Point {
+            x: 0.0,
+            y: 0.0,
+            z: 0.0,
+        };
+        let mut initial_velocity = Vector {
+            x: 5.0,
+            y: 5.0,
+            z: 0.0,
+        };
+        let mut projectile = Projectile::new(
+            time,
+            initial_position.borrow_mut(),
+            initial_velocity.borrow_mut(),
+            initial_acceleration.borrow_mut(),
+        );
 
         let coordinates = [
-            Point { x: 5.0, y: 9.82, z: 0.0 },
-            Point { x: 10.0, y: 29.46, z: 0.0 },
-            Point { x: 15.0, y: 58.90, z: 0.0 },
-            Point { x: 20.0, y: 98.15, z: 0.0 },
-            Point { x: 25.0, y: 147.22, z: 0.0 },
-            Point { x: 30.0, y: 206.09, z: 0.0 },
-            Point { x: 35.0, y: 274.77, z: 0.0 }];
+            Point {
+                x: 5.0,
+                y: 9.82,
+                z: 0.0,
+            },
+            Point {
+                x: 10.0,
+                y: 29.46,
+                z: 0.0,
+            },
+            Point {
+                x: 15.0,
+                y: 58.90,
+                z: 0.0,
+            },
+            Point {
+                x: 20.0,
+                y: 98.15,
+                z: 0.0,
+            },
+            Point {
+                x: 25.0,
+                y: 147.22,
+                z: 0.0,
+            },
+            Point {
+                x: 30.0,
+                y: 206.09,
+                z: 0.0,
+            },
+            Point {
+                x: 35.0,
+                y: 274.77,
+                z: 0.0,
+            },
+        ];
 
         for item in coordinates.iter().enumerate() {
             let (_, c): (usize, &Point) = item;
-            let x = Point::default();
-            let mut pos: &Point = x.borrow();
+            let mut pos = &Point::default();
 
             for _ in 1..fps {
                 pos = projectile.update();
             }
 
-            assert_eq!(relative_eq!(pos.x, c.x, epsilon = f64::EPSILON), true);
-            assert_eq!(relative_eq!(pos.y, c.y, epsilon = f64::EPSILON), true);
+            let x1 = relative_eq!(pos.x, c.x, epsilon = 1e-2);
+            let y1 = relative_eq!(pos.y, c.y, epsilon = 1e-2);
+            assert_eq!(x1, true);
+            assert_eq!(y1, true);
         }
     }
 }

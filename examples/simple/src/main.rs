@@ -1,10 +1,10 @@
 extern crate natura;
 
+use natura::*;
 use std::fmt;
 use std::fmt::Formatter;
-use std::time::Duration;
 use std::thread::sleep;
-use natura::*;
+use std::time::Duration;
 
 // A thing we want to animate.
 #[derive(Default)]
@@ -17,9 +17,10 @@ struct Sprite {
 
 impl fmt::Display for Sprite {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(f,
-               "Sprite x:{}, y:{}, x_vel:{}, y_vel:{}",
-               self.x, self.y, self.x_velocity, self.y_velocity
+        write!(
+            f,
+            "Sprite x:{}, y:{}, x_vel:{}, y_vel:{}",
+            self.x, self.y, self.x_velocity, self.y_velocity
         )
     }
 }

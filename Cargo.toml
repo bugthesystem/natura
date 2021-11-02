@@ -1,7 +1,7 @@
 [workspace]
 members = [
     "natura",
-    "natura-samples",
-    "natura-samples-coffee"
+    "examples/simple",
+    "examples/coffee-2d",
 ]
 

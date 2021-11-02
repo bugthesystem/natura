@@ -1,8 +1,4 @@
-use std::fmt;
-use std::fmt::Formatter;
-use coffee::graphics::{
-    Color, Frame, Mesh, Rectangle, Shape, Window, WindowSettings,
-};
+use coffee::graphics::{Color, Frame, Mesh, Rectangle, Shape, Window, WindowSettings};
 use coffee::load::Task;
 use coffee::{Game, Timer};
 
@@ -17,7 +13,6 @@ fn main() -> coffee::Result<()> {
         maximized: false,
     })
 }
-
 
 // where we want to animate it.
 const TARGET_X: f64 = 300.0;
@@ -42,7 +37,6 @@ impl Game for NaturaExample {
     type LoadingScreen = ();
 
     fn load(_window: &Window) -> Task<NaturaExample> {
-
         // Initialize a spring with frame-rate, angular frequency, and damping values.
         Task::succeed(|| NaturaExample {
             sprite: RectSprite::default(),
@@ -53,11 +47,15 @@ impl Game for NaturaExample {
     fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
         frame.clear(Color::BLACK);
         let mut mesh = Mesh::new();
-        let (sprite_x, sprite_x_velocity) = self.spring.update(self.sprite.x, self.sprite.x_velocity, TARGET_X);
+        let (sprite_x, sprite_x_velocity) =
+            self.spring
+                .update(self.sprite.x, self.sprite.x_velocity, TARGET_X);
         self.sprite.x = sprite_x;
         self.sprite.x_velocity = sprite_x_velocity;
 
-        let (sprite_y, sprite_y_velocity) = self.spring.update(self.sprite.y, self.sprite.y_velocity, TARGET_Y);
+        let (sprite_y, sprite_y_velocity) =
+            self.spring
+                .update(self.sprite.y, self.sprite.y_velocity, TARGET_Y);
         self.sprite.y = sprite_y;
         self.sprite.y_velocity = sprite_y_velocity;
 
