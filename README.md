@@ -5,7 +5,7 @@ A simple, efficient spring animation library for smooth, natural motion in Rust
 
 ## Usage
 
-Harmonica is framework-agnostic and works well in 2D and 3D contexts. Simply call `Spring::new` with your settings to initialize and `update` on each frame to animate.
+Harmonica is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L138) with your settings to initialize and [`update`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L171) on each frame to animate.
 
 For details, see the [examples](/examples)
 
@@ -60,7 +60,7 @@ Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
 
 * **Time Delta:** the time step to operate on. Game engines typically provide
   a way to determine the time delta, however if that's not available you can
-  simply set the framerate with the included `fps(u64)` utility function. Make
+  simply set the framerate with the included [`fps(u64)`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L105) utility function. Make
   the framerate you set here matches your actual framerate.
 * **Angular Velocity:** this translates roughly to the speed. Higher values are
   faster.
