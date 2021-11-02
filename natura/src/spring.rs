@@ -106,9 +106,9 @@ pub fn fps(n: u64) -> f64 {
     let duration = Duration::new(0, n as u32).as_nanos();
     let second = Duration::from_secs(1).as_nanos();
 
-    let result = (((second / duration) as f64 / 1000000.0) / 1000.0) as f64;
+    
 
-    return result;
+    (((second / duration) as f64 / 1000000.0) / 1000.0) as f64
 }
 
 impl Spring {
@@ -163,7 +163,7 @@ impl Spring {
             Self::calculate_critically_damped(delta_time, angular_frequency, &mut spring)
         }
 
-        return spring;
+        spring
     }
 
     /// update updates position and velocity values against a given target value.
@@ -175,7 +175,7 @@ impl Spring {
         let new_pos = old_pos * self.pos_pos_coef + old_vel * self.pos_vel_coef + equilibrium_pos;
         let new_vel = old_pos * self.vel_pos_coef + old_vel * self.vel_vel_coef;
 
-        return (new_pos, new_vel);
+        (new_pos, new_vel)
     }
 
     #[inline(always)]

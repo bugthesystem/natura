@@ -114,12 +114,12 @@ impl Projectile<'_> {
         initial_velocity: &'a mut Vector,
         initial_acceleration: &'a mut Vector,
     ) -> Projectile<'a> {
-        return Projectile {
+        Projectile {
             pos: initial_position,
             vel: initial_velocity,
             acc: initial_acceleration,
             delta_time,
-        };
+        }
     }
 
     /// update updates the position and velocity values for the given projectile.
@@ -133,12 +133,12 @@ impl Projectile<'_> {
         self.vel.y += self.acc.y * self.delta_time;
         self.vel.z += self.acc.z * self.delta_time;
 
-        return self.pos;
+        self.pos
     }
 
     /// position returns the position of the projectile.
     pub fn position(&mut self) -> &Point {
-        return self.pos;
+        self.pos
     }
 }
 
