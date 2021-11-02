@@ -3,7 +3,13 @@ A simple, efficient spring animation library for smooth, natural motion in Rust
 
 ![](misc/demo.gif)
 
-## Examples
+## Usage
+
+Harmonica is framework-agnostic and works well in 2D and 3D contexts. Simply call `Spring::new` with your settings to initialize and `update` on each frame to animate.
+
+For details, see the [examples](/examples)
+
+### Examples
 - `cargo run -p simple`
 ```rust
 // A thing we want to animate.
@@ -46,82 +52,53 @@ fn main() {
 ```
 
 - `cargo run -p coffee-2d`  
-  Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
+Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
 
-```rust
-use std::fmt;
-use std::fmt::Formatter;
-use coffee::graphics::{
-    Color, Frame, Mesh, Rectangle, Shape, Window, WindowSettings,
-};
-use coffee::load::Task;
-use coffee::{Game, Timer};
+## Settings
 
-use natura::*;
+`Spring::new` takes three values:
 
-fn main() -> coffee::Result<()> {
-    NaturaExample::run(WindowSettings {
-        title: String::from(" Natura example with Coffee"),
-        size: (1280, 1024),
-        resizable: true,
-        fullscreen: false,
-        maximized: false,
-    })
-}
+* **Time Delta:** the time step to operate on. Game engines typically provide
+  a way to determine the time delta, however if that's not available you can
+  simply set the framerate with the included `fps(u64)` utility function. Make
+  the framerate you set here matches your actual framerate.
+* **Angular Velocity:** this translates roughly to the speed. Higher values are
+  faster.
+* **Damping Ratio:** the springiness of the animation, generally between `0`
+  and `1`, though it can go higher. Lower values are springier. For details,
+  see below.
 
+## Damping Ratios
 
-// where we want to animate it.
-const TARGET_X: f64 = 300.0;
-const TARGET_Y: f64 = 500.0;
+The damping ratio affects the motion in one of three different ways depending
+on how it's set.
 
-// A thing we want to animate.
-#[derive(Default)]
-struct RectSprite {
-    x: f64,
-    x_velocity: f64,
-    y: f64,
-    y_velocity: f64,
-}
+### Under-Damping
 
-struct NaturaExample {
-    sprite: RectSprite,
-    spring: Spring,
-}
+A spring is under-damped when its damping ratio is less than `1`. An
+under-damped spring reaches equilibrium the fastest, but overshoots and will
+continue to oscillate as its amplitude decays over time.
 
-impl Game for NaturaExample {
-    type Input = ();
-    type LoadingScreen = ();
+### Critical Damping
 
-    fn load(_window: &Window) -> Task<NaturaExample> {
-        
-        Task::succeed(|| NaturaExample {
-            sprite: RectSprite::default(),
-            spring: Spring::new(natura::fps(60), 6.0, 0.5), // initialize a spring with frame-rate, angular frequency, and damping values.
-        })
-    }
+A spring is critically-damped the damping ratio is exactly `1`. A critically
+damped spring will reach equilibrium as fast as possible without oscillating.
 
-    fn draw(&mut self, frame: &mut Frame, _timer: &Timer) {
-        frame.clear(Color::BLACK);
-        let mut mesh = Mesh::new();
-        let (sprite_x, sprite_x_velocity) = self.spring.update(self.sprite.x, self.sprite.x_velocity, TARGET_X);
-        self.sprite.x = sprite_x;
-        self.sprite.x_velocity = sprite_x_velocity;
+### Over-Damping
 
-        let (sprite_y, sprite_y_velocity) = self.spring.update(self.sprite.y, self.sprite.y_velocity, TARGET_Y);
-        self.sprite.y = sprite_y;
-        self.sprite.y_velocity = sprite_y_velocity;
+A spring is over-damped the damping ratio is greater than `1`. An over-damped
+spring will never oscillate, but reaches equilibrium at a slower rate than
+a critically damped spring.
 
-        // use new position here on every frame
-        mesh.fill(
-            Shape::Rectangle(Rectangle {
-                x: self.sprite.x as f32,
-                y: self.sprite.y as f32,
-                width: 200.0,
-                height: 100.0,
-            }),
-            Color::WHITE,
-        );
-        mesh.draw(&mut frame.as_target());
-    }
-}
-```
+## Acknowledgements
+
+This library is a fairly straightforward port of [Ryan Juckett][juckett]’s
+excellent damped simple harmonic oscillator originally writen in C++ in 2008
+and published in 2012. [Ryan’s writeup][writeup] on the subject is fantastic.
+
+[juckett]: https://www.ryanjuckett.com/
+[writeup]: https://www.ryanjuckett.com/damped-springs/
+
+## License
+
+[MIT](https://github.com/ziyasal/natura/blob/main/LICENSE)
