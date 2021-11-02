@@ -180,7 +180,7 @@ impl Spring {
 
     #[inline(always)]
     fn calculate_critically_damped(delta_time: f64, angular_frequency: f64, spring: &mut Spring) {
-        let exp_term = (-angular_frequency * delta_time).exp(); // math.Exp(-angular_frequency * delta_time);
+        let exp_term = (-angular_frequency * delta_time).exp();
         let time_exp = delta_time * exp_term;
         let time_exp_freq = time_exp * angular_frequency;
 
@@ -201,9 +201,9 @@ impl Spring {
         let omega_zeta = angular_frequency * damping_ratio;
         let alpha = angular_frequency * (1.0 - damping_ratio * damping_ratio).sqrt();
 
-        let exp_term = (-omega_zeta * delta_time).exp(); //math.Exp(-omega_zeta * delta_time);
-        let cos_term = (alpha * delta_time).cos(); // math.Cos(alpha * delta_time);
-        let sin_term = (alpha * delta_time).sin(); //math.Sin(alpha * delta_time);
+        let exp_term = (-omega_zeta * delta_time).exp();
+        let cos_term = (alpha * delta_time).cos();
+        let sin_term = (alpha * delta_time).sin();
 
         let inv_alpha = 1.0 / alpha;
 
@@ -253,7 +253,7 @@ impl fmt::Display for Spring {
     fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
         write!(
             f,
-            "Sprite pos_pos_coef:{}, pos_vel_coef:{}, vel_pos_coef:{}, vel_vel_coef:{}",
+            "Spring(pos_pos_coef:{}, pos_vel_coef:{}, vel_pos_coef:{}, vel_vel_coef:{})",
             self.pos_pos_coef, self.pos_vel_coef, self.vel_pos_coef, self.vel_vel_coef
         )
     }
