@@ -106,8 +106,6 @@ pub fn fps(n: u64) -> f64 {
     let duration = Duration::new(0, n as u32).as_nanos();
     let second = Duration::from_secs(1).as_nanos();
 
-    
-
     (((second / duration) as f64 / 1000000.0) / 1000.0) as f64
 }
 
