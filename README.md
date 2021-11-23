@@ -1,5 +1,5 @@
 # Natura ![](misc/natura-vegeta.png)
-A simple, efficient spring animation library for smooth, natural motion in Rust
+An opinionated, simple and efficient spring animation library for smooth, natural motion in Rust
 
 ![](misc/demo.gif)
 
