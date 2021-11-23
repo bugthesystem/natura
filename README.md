@@ -102,3 +102,5 @@ and published in 2012. [Ryan’s writeup][writeup] on the subject is fantastic.
 ## License
 
 [MIT](https://github.com/ziyasal/natura/blob/main/LICENSE)
+
+> _This lib developed to be part of Λ.R.Ξ.N.Λ 2D game engine._
