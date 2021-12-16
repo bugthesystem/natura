@@ -1,2 +1,0 @@
-- name: publish crates
-  uses: katyo/publish-crates@v1
