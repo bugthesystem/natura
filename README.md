@@ -10,6 +10,10 @@ Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [
 For details, see the [examples](/examples)
 
 ### Examples
+- `cargo run -p coffee-2d`  
+Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
+- `cargo run -p bevy-simple`  
+Example with [`Bevy Engine`](https://github.com/bevyengine/bevy)
 - `cargo run -p simple`
 ```rust
 // A thing we want to animate.
@@ -51,8 +55,6 @@ fn main() {
 }
 ```
 
-- `cargo run -p coffee-2d`  
-Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
 
 ## Settings
 
