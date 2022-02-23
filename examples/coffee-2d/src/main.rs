@@ -6,7 +6,7 @@ use natura::*;
 
 fn main() -> coffee::Result<()> {
     NaturaExample::run(WindowSettings {
-        title: String::from(" Natura example with Coffee"),
+        title: String::from("Λ.R.Ξ.N.Λ 2D — Natura: example with Coffee"),
         size: (1280, 1024),
         resizable: true,
         fullscreen: false,

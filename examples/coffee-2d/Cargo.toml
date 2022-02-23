@@ -1,7 +1,7 @@
 [package]
 name = "coffee-2d"
 version = "0.1.0"
-edition = "2018"
+edition = "2021"
 
 [dependencies]
 coffee = { version = "0.4", features = ["opengl"] }

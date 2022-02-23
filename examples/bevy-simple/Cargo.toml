@@ -1,0 +1,28 @@
+[package]
+name = "bevy-simple"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+# Compile all the *dependencies* in optimized release mode even if `--release` is not passed in
+[profile.dev]
+opt-level = 3
+debug = false
+debug-assertions = false
+overflow-checks = false
+incremental = false
+codegen-units = 16
+
+# But compile the project itself in debug mode if `--release` is not passed in
+[profile.dev.package.bevy-simple]
+opt-level = 0
+debug = true
+debug-assertions = true
+overflow-checks = true
+incremental = true
+codegen-units = 256
+
+[dependencies]
+bevy = "0.6.1"
+natura = { path = "../../natura", version = "0.1.0" }

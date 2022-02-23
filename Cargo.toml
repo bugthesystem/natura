@@ -3,5 +3,9 @@ members = [
     "natura",
     "examples/simple",
     "examples/coffee-2d",
+    "examples/bevy-simple",
 ]
 
+# Err: DX12 API enabled on non-Windows OS. If your project is not using resolver="2" in Cargo.toml, it should.
+# https://doc.rust-lang.org/cargo/reference/resolver.html#resolver-versions
+resolver = "2"
