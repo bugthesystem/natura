@@ -1,6 +1,7 @@
 [workspace]
 members = [
     "natura",
+    "bevy-natura",
     "examples/simple",
     "examples/coffee-2d",
     "examples/bevy-simple",

@@ -1,37 +1,19 @@
 use bevy::prelude::*;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use natura::*;
-
-// A thing we want to animate.
-#[derive(Default, Component)]
-struct Sprite {
-    x: f64,
-    x_velocity: f64,
-    y: f64,
-    y_velocity: f64,
-}
-
-#[derive(Default)]
-struct NaturaBundle {
-    sprite: Sprite,
-    spring: Spring,
-}
+use bevy_natura::{NaturaAnimationPlugin, NaturaAnimationBundle, DeltaTime, AngularFrequency, DampingRatio};
 
 // Where we want to animate it.
 const TARGET_X: f64 = 40.0;
 const TARGET_Y: f64 = 200.0;
 
 fn main() {
-    let sprite = Sprite::default();
-
-    // Initialize a spring with frame-rate, angular frequency, and damping values.
-    let spring = Spring::new(natura::fps(60), 6.0, 0.7);
-
     App::new()
         .add_plugins(DefaultPlugins)
+        .add_plugin(NaturaAnimationPlugin::with(DeltaTime(60),
+                                                AngularFrequency(6.0),
+                                                DampingRatio(0.7)))
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
-        .insert_resource(NaturaBundle { sprite, spring })
         .add_startup_system(template_setup)
         .add_system(template_animation)
         .run();
@@ -41,7 +23,7 @@ fn template_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn_bundle(OrthographicCameraBundle::new_2d());
     commands.spawn_bundle(Text2dBundle {
         text: Text::with_section(
-            "Shall we play a game?",
+            "Natura: Shall we play a game Bevy?",
             TextStyle {
                 font: asset_server.load("fonts/PixelSmall.ttf"),
                 font_size: 58.0,
@@ -58,7 +40,7 @@ fn template_setup(mut commands: Commands, asset_server: Res<AssetServer>) {
 
 fn template_animation(
     _: Res<Time>,
-    mut natur: ResMut<NaturaBundle>,
+    mut natur: ResMut<NaturaAnimationBundle>,
     mut query: Query<&mut Transform, With<Text>>,
 ) {
     let n = natur.as_mut();
