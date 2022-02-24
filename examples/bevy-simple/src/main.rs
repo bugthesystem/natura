@@ -9,9 +9,7 @@ const TARGET_Y: f64 = 200.0;
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
-        .add_plugin(NaturaAnimationPlugin::with(DeltaTime(60),
-                                                AngularFrequency(6.0),
-                                                DampingRatio(0.7)))
+        .add_plugin(NaturaAnimationPlugin::new(DeltaTime(60), AngularFrequency(6.0), DampingRatio(0.7)))
         .add_plugin(LogDiagnosticsPlugin::default())
         .add_plugin(FrameTimeDiagnosticsPlugin::default())
         .add_startup_system(template_setup)
