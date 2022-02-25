@@ -109,6 +109,12 @@ pub fn fps(n: u64) -> f64 {
     (((second / duration) as f64 / 1000000.0) / 1000.0) as f64
 }
 
+pub struct DeltaTime(pub u64);
+
+pub struct AngularFrequency(pub f64);
+
+pub struct DampingRatio(pub f64);
+
 impl Spring {
     /// new initializes a new Spring, computing the parameters needed to
     /// simulate a damped spring over a given period of time.
