@@ -23,7 +23,7 @@ pub struct NaturaAnimationBundle {
 }
 
 impl NaturaAnimationPlugin {
-    pub fn with(delta_time: DeltaTime,
+    pub fn new(delta_time: DeltaTime,
                 angular_frequency: AngularFrequency,
                 damping_ratio: DampingRatio) -> NaturaAnimationPlugin {
         NaturaAnimationPlugin { delta_time, angular_frequency, damping_ratio }
