@@ -1,6 +1,7 @@
 use bevy::prelude::*;
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
-use bevy_natura::{NaturaAnimationPlugin, NaturaAnimationBundle, DeltaTime, AngularFrequency, DampingRatio};
+use bevy_natura::{NaturaAnimationPlugin, NaturaAnimationBundle};
+use natura::{DeltaTime, AngularFrequency, DampingRatio};
 
 // Where we want to animate it.
 const TARGET_X: f64 = 40.0;
