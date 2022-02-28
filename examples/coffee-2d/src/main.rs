@@ -40,7 +40,7 @@ impl Game for NaturaExample {
         // Initialize a spring with frame-rate, angular frequency, and damping values.
         Task::succeed(|| NaturaExample {
             sprite: RectSprite::default(),
-            spring: Spring::new(natura::fps(60), 6.0, 0.5),
+            spring: Spring::new(DeltaTime(natura::fps(60)), AngularFrequency(6.0), DampingRatio(0.5)),
         })
     }
 

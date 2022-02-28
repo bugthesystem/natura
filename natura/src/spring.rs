@@ -5,9 +5,9 @@
 /// Example usage:
 ///
 ///```
-/// use natura::{Spring, Vector, Point};
+/// use natura::{Spring, Vector, Point, DeltaTime, AngularFrequency, DampingRatio};
 /// // Run once to initialize.
-/// let mut spring = Spring::new(natura::fps(60), 6.0, 0.5);
+/// let mut spring = Spring::new(DeltaTime(natura::fps(60)), AngularFrequency(6.0), DampingRatio(0.5));
 ///
 /// // Update on every frame.
 /// let mut pos = 0.0;
@@ -55,7 +55,7 @@ use std::time::Duration;
 /// # Example:
 ///
 /// ```
-/// use natura::{Spring, fps};
+/// use natura::{Spring, fps, AngularFrequency, DampingRatio};
 ///
 /// // First precompute spring coefficients based on your settings:
 /// let x:f64 =0.0;
@@ -64,12 +64,11 @@ use std::time::Duration;
 /// let y_vel:f64 = 0.0;
 ///
 /// delta_time = fps(60);
-/// let mut s = Spring::new(delta_time, 5.0, 0.2);
+/// let mut s = Spring::new(delta_time, AngularFrequency(5.0),DampingRatio(0.2));
 ///
 /// // Then, in your update loop:
 /// let (x_new, x_vel_new) = s.update(x, x_vel, 10.0); // update the X position
-/// let (y_new, y_vel_new) = s.update(y, y_vel, 20.0); // update the Y position
-///
+/// let (y_new, y_vel_new) = s.update(y, y_vel, 20.0); // update the Y position///
 #[derive(Default)]
 pub struct Spring {
     ///
@@ -98,9 +97,9 @@ const EPSILON: f64 = 0.00000001;
 ///
 /// Example:
 /// ```
-/// use natura::{Spring, fps};
+/// use natura::{Spring, fps, DeltaTime, AngularFrequency, DampingRatio};
 ///
-/// let mut spring = Spring::new(fps(60), 5.0, 0.2);
+/// let mut spring = Spring::new(DeltaTime(fps(60)), AngularFrequency(5.0), DampingRatio(0.2));
 /// ```
 pub fn fps(n: u64) -> f64 {
     let duration = Duration::new(0, n as u32).as_nanos();
@@ -109,10 +108,12 @@ pub fn fps(n: u64) -> f64 {
     (((second / duration) as f64 / 1000000.0) / 1000.0) as f64
 }
 
-pub struct DeltaTime(pub u64);
+pub struct DeltaTime(pub f64);
 
+#[derive(Clone)]
 pub struct AngularFrequency(pub f64);
 
+#[derive(Clone)]
 pub struct DampingRatio(pub f64);
 
 impl Spring {
@@ -139,16 +140,20 @@ impl Spring {
     ///
     /// An under-damped spring will reach equilibrium the fastest, but also
     /// overshoots it and continues to oscillate as its amplitude decays over time.
-    pub fn new(delta_time: f64, mut angular_frequency: f64, mut damping_ratio: f64) -> Self {
+    pub fn new(
+        delta_time: DeltaTime,
+        mut angular_frequency: AngularFrequency,
+        mut damping_ratio: DampingRatio,
+    ) -> Self {
         let mut spring = Spring::default();
 
         // keep values in a legal range.
-        angular_frequency = f64::max(0.0, angular_frequency);
-        damping_ratio = f64::max(0.0, damping_ratio);
+        angular_frequency.0 = f64::max(0.0, angular_frequency.0);
+        damping_ratio.0 = f64::max(0.0, damping_ratio.0);
 
         // if there is no angular frequency, the spring will not move and we can
         // return identity.
-        if angular_frequency < EPSILON {
+        if angular_frequency.0 < EPSILON {
             spring.pos_pos_coef = 1.0;
             spring.pos_vel_coef = 0.0;
             spring.vel_pos_coef = 0.0;
@@ -156,15 +161,28 @@ impl Spring {
             return spring;
         }
 
-        if damping_ratio > 1.0 + EPSILON {
+        let f_delta_time = delta_time.0 as f64;
+
+        if damping_ratio.0 > 1.0 + EPSILON {
             // Over-damped.
-            Self::calculate_over_damped(delta_time, angular_frequency, damping_ratio, &mut spring);
-        } else if damping_ratio < 1.0 - EPSILON {
+            Self::calculate_over_damped(
+                delta_time.0,
+                angular_frequency.0,
+                damping_ratio.0,
+                &mut spring,
+            );
+        } else if damping_ratio.0 < 1.0 - EPSILON {
             // Under-damped.
-            Self::calculate_under_damped(delta_time, angular_frequency, damping_ratio, &mut spring)
+            Self::calculate_under_damped(
+                f_delta_time,
+                angular_frequency.0,
+                damping_ratio.0,
+                &mut spring,
+            )
         } else {
             // Critically damped.
-            Self::calculate_critically_damped(delta_time, angular_frequency, &mut spring)
+
+            Self::calculate_critically_damped(f_delta_time, angular_frequency.0, &mut spring)
         }
 
         spring

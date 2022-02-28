@@ -14,16 +14,19 @@ For details, see the [examples](/examples)
 Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
 - `cargo run -p bevy-simple`  
 Example with [`Bevy Engine`](https://github.com/bevyengine/bevy)
+
+Enable Plugin:
+```rust
+// omitted for brevity
+ .add_plugin(NaturaAnimationPlugin::new(
+            DeltaTime(60.0),
+            AngularFrequency(6.0),
+            DampingRatio(0.7),
+        ))
+```
+
 - `cargo run -p simple`
 ```rust
-// A thing we want to animate.
-#[derive(Default)]
-struct Sprite {
-    x: f64,
-    x_velocity: f64,
-    y: f64,
-    y_velocity: f64,
-}
 
 // Where we want to animate it.
 const TARGET_X: f64 = 50.0;
@@ -33,7 +36,7 @@ fn main() {
     let mut sprite = Sprite::default();
  
     // initialize a spring with frame-rate, angular frequency, and damping values.
-    let mut spring = Spring::new(natura::fps(60), 6.0, 0.5);
+    let mut spring = Spring::new(DeltaTime(natura::fps(60)), AngularFrequency(6.0), 0.5);
 
     loop {
         let (sprite_x, sprite_x_velocity) = spring.update(sprite.x, sprite.x_velocity, TARGET_X);

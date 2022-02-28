@@ -1,29 +1,8 @@
 extern crate natura;
 
 use natura::*;
-use std::fmt;
-use std::fmt::Formatter;
 use std::thread::sleep;
 use std::time::Duration;
-
-// A thing we want to animate.
-#[derive(Default)]
-struct Sprite {
-    x: f64,
-    x_velocity: f64,
-    y: f64,
-    y_velocity: f64,
-}
-
-impl fmt::Display for Sprite {
-    fn fmt(&self, f: &mut Formatter<'_>) -> fmt::Result {
-        write!(
-            f,
-            "Sprite x:{}, y:{}, x_vel:{}, y_vel:{}",
-            self.x, self.y, self.x_velocity, self.y_velocity
-        )
-    }
-}
 
 // Where we want to animate it.
 const TARGET_X: f64 = 50.0;
@@ -35,7 +14,7 @@ fn main() {
     println!("FPS: {}", fps);
 
     // Initialize a spring with frame-rate, angular frequency, and damping values.
-    let mut spring = Spring::new(fps, 6.0, 0.5);
+    let mut spring = Spring::new(DeltaTime(fps), AngularFrequency(6.0), DampingRatio(0.5));
 
     loop {
         let (sprite_x, sprite_x_velocity) = spring.update(sprite.x, sprite.x_velocity, TARGET_X);

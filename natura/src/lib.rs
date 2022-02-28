@@ -6,9 +6,9 @@
 //!
 //! Spring usage:
 //!```
-//! use natura::{Spring, Vector, Point};
+//! use natura::{Spring, Vector, Point, DeltaTime, AngularFrequency, DampingRatio};
 //! // Run once to initialize.
-//! let mut spring = Spring::new(natura::fps(60), 6.0, 0.5);
+//! let mut spring = Spring::new(DeltaTime(natura::fps(60)), AngularFrequency(6.0), DampingRatio(0.5));
 //!
 //! // Update on every frame.
 //! let mut pos = 0.0;
@@ -42,9 +42,11 @@
 //! ```
 mod projectile;
 mod spring;
+mod sprite;
 
 pub use projectile::*;
 pub use spring::*;
+pub use sprite::*;
 
 #[cfg(test)]
 #[macro_use]
