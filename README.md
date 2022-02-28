@@ -10,13 +10,18 @@ Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [
 For details, see the [examples](/examples)
 
 ### Examples
-- `cargo run -p coffee-2d`  
-Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
-- `cargo run -p bevy-simple`  
-Example with [`Bevy Engine`](https://github.com/bevyengine/bevy)
 
-Enable Plugin:
+#### Example with [2D engine `coffee`](https://github.com/hecrj/coffee)
+`cargo run -p coffee-2d`  
+
+#### Example with [`Bevy Engine`](https://github.com/bevyengine/bevy)
+`cargo run -p bevy-simple`  
+
+**Enable Plugin:**
+
 ```rust
+use bevy_natura::{NaturaAnimationBundle, NaturaAnimationPlugin};
+
 // omitted for brevity
  .add_plugin(NaturaAnimationPlugin::new(
             DeltaTime(60.0),
@@ -25,7 +30,14 @@ Enable Plugin:
         ))
 ```
 
-- `cargo run -p simple`
+Please see usage [here](https://github.com/ziyasal/natura/blob/main/examples/bevy-simple/src/main.rs#L44)
+
+#### Simple example
+
+`cargo run -p simple`
+
+**Code:**
+
 ```rust
 
 // Where we want to animate it.
