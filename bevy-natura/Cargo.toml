@@ -1,10 +1,10 @@
 [package]
 name = "bevy-natura"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 [dependencies]
-bevy = { version = "0.6.1", default-features = false }
+bevy = { version = "0.15", default-features = false }
 natura = { path = "../natura", version = "0.1.0" }
