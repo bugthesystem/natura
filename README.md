@@ -59,6 +59,46 @@ fn setup(mut commands: Commands) {
 }
 ```
 
+**Advanced Features:**
+
+```rust
+use bevy_natura::{
+    AnimationGroup, AnimationPaused, AnimationStarted, AnimationCompleted,
+    EasingCurve, GlobalAnimationPaused, PausedGroups,
+};
+
+// Use easing curves for different animation feels
+commands.spawn((
+    NaturaSpringBundle::with_easing(
+        AngularFrequency(6.0),
+        DampingRatio(0.7),
+        EasingCurve::EaseOut,
+    ),
+    NaturaTarget::new_2d(100.0, 50.0),
+));
+
+// Group animations for batch control
+commands.spawn((
+    NaturaSpringBundle::new(AngularFrequency(6.0), DampingRatio(0.7)),
+    NaturaTarget::new_2d(100.0, 50.0),
+    AnimationGroup::new(1), // Group ID 1
+));
+
+// Pause individual entities
+commands.entity(entity).insert(AnimationPaused);
+
+// Pause entire groups
+let mut paused_groups = world.resource_mut::<PausedGroups>();
+paused_groups.pause(1); // Pause group 1
+
+// Listen for animation events
+fn on_animation_complete(mut events: EventReader<AnimationCompleted>) {
+    for event in events.read() {
+        println!("Entity {:?} finished at {:?}", event.entity, event.final_position);
+    }
+}
+```
+
 Please see full usage [here](https://github.com/bugthesystem/natura/blob/main/examples/bevy-simple/src/main.rs)
 
 #### Simple example

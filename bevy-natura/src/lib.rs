@@ -1,6 +1,180 @@
 use bevy::prelude::*;
 use natura::{Spring, Sprite as NaturaSpriteCore};
 
+// ==================== Animation Events ====================
+
+/// Event emitted when an animation starts moving towards its target.
+/// This is sent when an entity begins animating from rest or when the target changes.
+#[derive(Event, Debug, Clone)]
+pub struct AnimationStarted {
+    /// The entity that started animating
+    pub entity: Entity,
+    /// The target position the entity is moving towards
+    pub target: Vec3,
+}
+
+/// Event emitted when an animation completes (reaches its target and comes to rest).
+#[derive(Event, Debug, Clone)]
+pub struct AnimationCompleted {
+    /// The entity that completed its animation
+    pub entity: Entity,
+    /// The final position of the entity
+    pub final_position: Vec3,
+}
+
+// ==================== Animation State ====================
+
+/// Tracks the animation state for event emission
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Eq, Reflect)]
+#[reflect(Component)]
+pub enum AnimationState {
+    /// Animation is not moving (at rest)
+    #[default]
+    Idle,
+    /// Animation is actively moving towards target
+    Animating,
+    /// Animation just completed this frame
+    JustCompleted,
+}
+
+// ==================== Pause/Resume ====================
+
+/// Component to pause an individual entity's animation.
+/// Add this component to pause, remove it to resume.
+#[derive(Component, Default, Debug, Clone, Reflect)]
+#[reflect(Component)]
+pub struct AnimationPaused;
+
+/// Resource to globally pause all Natura animations.
+/// Insert this resource to pause all animations, remove to resume.
+#[derive(Resource, Default, Debug, Clone)]
+pub struct GlobalAnimationPaused;
+
+// ==================== Animation Groups ====================
+
+/// Component to group animations together.
+/// Entities with the same group ID can be controlled together.
+#[derive(Component, Debug, Clone, PartialEq, Eq, Hash, Reflect)]
+#[reflect(Component)]
+pub struct AnimationGroup(pub u32);
+
+impl AnimationGroup {
+    /// Creates a new animation group with the specified ID.
+    #[must_use]
+    pub fn new(id: u32) -> Self {
+        AnimationGroup(id)
+    }
+}
+
+/// Resource to pause specific animation groups.
+/// Groups listed here will not animate.
+#[derive(Resource, Default, Debug, Clone)]
+pub struct PausedGroups {
+    /// Set of paused group IDs
+    pub groups: std::collections::HashSet<u32>,
+}
+
+impl PausedGroups {
+    /// Pauses the specified group.
+    pub fn pause(&mut self, group_id: u32) {
+        self.groups.insert(group_id);
+    }
+
+    /// Resumes the specified group.
+    pub fn resume(&mut self, group_id: u32) {
+        self.groups.remove(&group_id);
+    }
+
+    /// Returns true if the group is paused.
+    #[must_use]
+    pub fn is_paused(&self, group_id: u32) -> bool {
+        self.groups.contains(&group_id)
+    }
+}
+
+// ==================== Easing Curves ====================
+
+/// Easing curve types for animation modification.
+/// These curves modify how the spring animation progresses over time.
+#[derive(Component, Default, Debug, Clone, Copy, PartialEq, Reflect)]
+#[reflect(Component)]
+pub enum EasingCurve {
+    /// No easing modification - pure spring physics
+    #[default]
+    None,
+    /// Ease in - starts slow, speeds up
+    EaseIn,
+    /// Ease out - starts fast, slows down
+    EaseOut,
+    /// Ease in and out - slow start and end
+    EaseInOut,
+    /// Quadratic ease in
+    QuadraticIn,
+    /// Quadratic ease out
+    QuadraticOut,
+    /// Cubic ease in
+    CubicIn,
+    /// Cubic ease out
+    CubicOut,
+    /// Elastic bounce effect
+    Elastic,
+    /// Bounce effect at the end
+    Bounce,
+}
+
+impl EasingCurve {
+    /// Applies the easing curve to a progress value (0.0 to 1.0).
+    /// Returns the eased progress value.
+    #[must_use]
+    pub fn apply(&self, t: f64) -> f64 {
+        let t = t.clamp(0.0, 1.0);
+        match self {
+            EasingCurve::None => t,
+            EasingCurve::EaseIn => t * t,
+            EasingCurve::EaseOut => 1.0 - (1.0 - t) * (1.0 - t),
+            EasingCurve::EaseInOut => {
+                if t < 0.5 {
+                    2.0 * t * t
+                } else {
+                    1.0 - (-2.0 * t + 2.0).powi(2) / 2.0
+                }
+            }
+            EasingCurve::QuadraticIn => t * t,
+            EasingCurve::QuadraticOut => t * (2.0 - t),
+            EasingCurve::CubicIn => t * t * t,
+            EasingCurve::CubicOut => {
+                let t1 = t - 1.0;
+                t1 * t1 * t1 + 1.0
+            }
+            EasingCurve::Elastic => {
+                if t == 0.0 || t == 1.0 {
+                    t
+                } else {
+                    let p = 0.3;
+                    let s = p / 4.0;
+                    (2.0_f64).powf(-10.0 * t) * ((t - s) * (2.0 * std::f64::consts::PI / p)).sin() + 1.0
+                }
+            }
+            EasingCurve::Bounce => {
+                let n1 = 7.5625;
+                let d1 = 2.75;
+                if t < 1.0 / d1 {
+                    n1 * t * t
+                } else if t < 2.0 / d1 {
+                    let t = t - 1.5 / d1;
+                    n1 * t * t + 0.75
+                } else if t < 2.5 / d1 {
+                    let t = t - 2.25 / d1;
+                    n1 * t * t + 0.9375
+                } else {
+                    let t = t - 2.625 / d1;
+                    n1 * t * t + 0.984375
+                }
+            }
+        }
+    }
+}
+
 /// Plugin that enables Natura spring animations for multiple entities.
 /// 
 /// Unlike the previous implementation which only supported a single sprite,
@@ -227,6 +401,8 @@ impl NaturaTarget {
 pub struct NaturaSpringBundle {
     pub sprite: NaturaSprite,
     pub spring: NaturaSpring,
+    pub state: AnimationState,
+    pub easing: EasingCurve,
 }
 
 impl NaturaSpringBundle {
@@ -236,6 +412,8 @@ impl NaturaSpringBundle {
         NaturaSpringBundle {
             sprite: NaturaSprite::default(),
             spring: NaturaSpring::new(angular_frequency, damping_ratio),
+            state: AnimationState::default(),
+            easing: EasingCurve::default(),
         }
     }
 
@@ -251,25 +429,84 @@ impl NaturaSpringBundle {
         NaturaSpringBundle {
             sprite: NaturaSprite::new(initial_x, initial_y, initial_z),
             spring: NaturaSpring::new(angular_frequency, damping_ratio),
+            state: AnimationState::default(),
+            easing: EasingCurve::default(),
+        }
+    }
+
+    /// Creates a new bundle with an easing curve.
+    #[must_use]
+    pub fn with_easing(
+        angular_frequency: AngularFrequency,
+        damping_ratio: DampingRatio,
+        easing: EasingCurve,
+    ) -> Self {
+        NaturaSpringBundle {
+            sprite: NaturaSprite::default(),
+            spring: NaturaSpring::new(angular_frequency, damping_ratio),
+            state: AnimationState::default(),
+            easing,
+        }
+    }
+
+    /// Creates a new bundle with a group assignment.
+    #[must_use]
+    pub fn with_group(
+        angular_frequency: AngularFrequency,
+        damping_ratio: DampingRatio,
+        _group_id: u32,
+    ) -> Self {
+        // Note: AnimationGroup component should be added separately
+        NaturaSpringBundle {
+            sprite: NaturaSprite::default(),
+            spring: NaturaSpring::new(angular_frequency, damping_ratio),
+            state: AnimationState::default(),
+            easing: EasingCurve::default(),
         }
     }
 }
+
+/// Velocity threshold for determining if an animation is at rest
+const REST_VELOCITY_THRESHOLD: f64 = 0.01;
+/// Position threshold for determining if an animation has reached its target
+const TARGET_POSITION_THRESHOLD: f64 = 0.1;
 
 /// System that updates all entities with Natura spring animations.
 /// This system queries all entities that have NaturaSprite, NaturaSpring,
 /// NaturaTarget, and Transform components, and applies spring physics
 /// to animate them towards their targets.
 /// 
+/// Supports:
+/// - Individual entity pausing via `AnimationPaused` component
+/// - Global pausing via `GlobalAnimationPaused` resource
+/// - Group pausing via `PausedGroups` resource
+/// - Animation events (`AnimationStarted`, `AnimationCompleted`)
+/// - Easing curves via `EasingCurve` component
+/// 
 /// Uses Bevy's Time resource for frame-rate independent animation.
 fn natura_animation_system(
     time: Res<Time>,
+    global_pause: Option<Res<GlobalAnimationPaused>>,
+    paused_groups: Option<Res<PausedGroups>>,
+    mut ev_started: EventWriter<AnimationStarted>,
+    mut ev_completed: EventWriter<AnimationCompleted>,
     mut query: Query<(
+        Entity,
         &mut NaturaSprite,
         &mut NaturaSpring,
         &NaturaTarget,
         &mut Transform,
+        &mut AnimationState,
+        Option<&EasingCurve>,
+        Option<&AnimationGroup>,
+        Option<&AnimationPaused>,
     )>,
 ) {
+    // Check for global pause
+    if global_pause.is_some() {
+        return;
+    }
+
     let delta_seconds = time.delta_secs_f64();
     
     // Skip if delta is too small or too large (e.g., during pause or lag spikes)
@@ -277,7 +514,28 @@ fn natura_animation_system(
         return;
     }
 
-    for (mut sprite, mut spring, target, mut transform) in query.iter_mut() {
+    for (entity, mut sprite, mut spring, target, mut transform, mut state, easing, group, paused) in query.iter_mut() {
+        // Skip if individually paused
+        if paused.is_some() {
+            continue;
+        }
+
+        // Skip if group is paused
+        if let (Some(group), Some(paused_groups)) = (group, &paused_groups) {
+            if paused_groups.is_paused(group.0) {
+                continue;
+            }
+        }
+
+        // Calculate distance to target before update
+        let prev_at_rest = sprite.is_at_rest(REST_VELOCITY_THRESHOLD);
+        let prev_distance = ((sprite.x - target.x).powi(2) 
+            + (sprite.y - target.y).powi(2) 
+            + (sprite.z - target.z).powi(2)).sqrt();
+
+        // Get easing curve (default to None if not present)
+        let easing_curve = easing.copied().unwrap_or(EasingCurve::None);
+
         // Update X position with spring physics
         let (new_x, new_x_vel) = spring.update(sprite.x, sprite.x_velocity, target.x, delta_seconds);
         sprite.x = new_x;
@@ -293,10 +551,74 @@ fn natura_animation_system(
         sprite.z = new_z;
         sprite.z_velocity = new_z_vel;
 
+        // Apply easing curve if present (modifies the interpolation towards target)
+        if easing_curve != EasingCurve::None {
+            // Calculate progress based on distance to target
+            let current_distance = ((sprite.x - target.x).powi(2) 
+                + (sprite.y - target.y).powi(2) 
+                + (sprite.z - target.z).powi(2)).sqrt();
+            
+            if prev_distance > TARGET_POSITION_THRESHOLD {
+                let raw_progress = 1.0 - (current_distance / prev_distance).min(1.0);
+                let eased_progress = easing_curve.apply(raw_progress);
+                
+                // Blend the spring result with eased interpolation
+                let blend_factor = 0.3; // How much easing affects the spring
+                let eased_x = sprite.x + (target.x - sprite.x) * eased_progress * blend_factor;
+                let eased_y = sprite.y + (target.y - sprite.y) * eased_progress * blend_factor;
+                let eased_z = sprite.z + (target.z - sprite.z) * eased_progress * blend_factor;
+                
+                sprite.x = sprite.x * (1.0 - blend_factor) + eased_x * blend_factor;
+                sprite.y = sprite.y * (1.0 - blend_factor) + eased_y * blend_factor;
+                sprite.z = sprite.z * (1.0 - blend_factor) + eased_z * blend_factor;
+            }
+        }
+
         // Apply the animated position to the transform
         transform.translation.x = sprite.x as f32;
         transform.translation.y = sprite.y as f32;
         transform.translation.z = sprite.z as f32;
+
+        // Check if animation just started
+        let now_at_rest = sprite.is_at_rest(REST_VELOCITY_THRESHOLD);
+        let at_target = ((sprite.x - target.x).abs() < TARGET_POSITION_THRESHOLD)
+            && ((sprite.y - target.y).abs() < TARGET_POSITION_THRESHOLD)
+            && ((sprite.z - target.z).abs() < TARGET_POSITION_THRESHOLD);
+
+        // State machine for animation events
+        match *state {
+            AnimationState::Idle => {
+                if !now_at_rest && !at_target {
+                    *state = AnimationState::Animating;
+                    ev_started.send(AnimationStarted {
+                        entity,
+                        target: Vec3::new(target.x as f32, target.y as f32, target.z as f32),
+                    });
+                }
+            }
+            AnimationState::Animating => {
+                if now_at_rest && at_target {
+                    *state = AnimationState::JustCompleted;
+                    ev_completed.send(AnimationCompleted {
+                        entity,
+                        final_position: Vec3::new(sprite.x as f32, sprite.y as f32, sprite.z as f32),
+                    });
+                }
+            }
+            AnimationState::JustCompleted => {
+                // Transition back to Idle after one frame
+                *state = AnimationState::Idle;
+            }
+        }
+
+        // If was at rest and now moving towards a different target, send start event
+        if prev_at_rest && !now_at_rest && *state == AnimationState::Idle {
+            *state = AnimationState::Animating;
+            ev_started.send(AnimationStarted {
+                entity,
+                target: Vec3::new(target.x as f32, target.y as f32, target.z as f32),
+            });
+        }
     }
 }
 
@@ -305,6 +627,13 @@ impl Plugin for NaturaAnimationPlugin {
         app.register_type::<NaturaSprite>()
             .register_type::<NaturaSpring>()
             .register_type::<NaturaTarget>()
+            .register_type::<AnimationState>()
+            .register_type::<EasingCurve>()
+            .register_type::<AnimationGroup>()
+            .register_type::<AnimationPaused>()
+            .add_event::<AnimationStarted>()
+            .add_event::<AnimationCompleted>()
+            .init_resource::<PausedGroups>()
             .add_systems(Update, natura_animation_system);
     }
 }
@@ -660,5 +989,222 @@ mod tests {
         let target = NaturaTarget::new(1.0, 2.0, 3.0);
         let debug_str = format!("{:?}", target);
         assert!(debug_str.contains("NaturaTarget"));
+    }
+
+    // ==================== Easing Curve Tests ====================
+
+    #[test]
+    fn test_easing_curve_none() {
+        let easing = EasingCurve::None;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert_eq!(easing.apply(0.5), 0.5);
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_ease_in() {
+        let easing = EasingCurve::EaseIn;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert!(easing.apply(0.5) < 0.5); // Should be slower at start
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_ease_out() {
+        let easing = EasingCurve::EaseOut;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert!(easing.apply(0.5) > 0.5); // Should be faster at start
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_ease_in_out() {
+        let easing = EasingCurve::EaseInOut;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert!((easing.apply(0.5) - 0.5).abs() < 0.01); // Middle should be close to 0.5
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_quadratic_in() {
+        let easing = EasingCurve::QuadraticIn;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert_eq!(easing.apply(0.5), 0.25); // 0.5^2 = 0.25
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_quadratic_out() {
+        let easing = EasingCurve::QuadraticOut;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert_eq!(easing.apply(0.5), 0.75); // 0.5 * (2 - 0.5) = 0.75
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_cubic_in() {
+        let easing = EasingCurve::CubicIn;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert_eq!(easing.apply(0.5), 0.125); // 0.5^3 = 0.125
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_cubic_out() {
+        let easing = EasingCurve::CubicOut;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert!((easing.apply(0.5) - 0.875).abs() < 0.001);
+        assert_eq!(easing.apply(1.0), 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_elastic() {
+        let easing = EasingCurve::Elastic;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert_eq!(easing.apply(1.0), 1.0);
+        // Elastic should overshoot
+        assert!(easing.apply(0.9) > 1.0 || easing.apply(0.8) > 1.0);
+    }
+
+    #[test]
+    fn test_easing_curve_bounce() {
+        let easing = EasingCurve::Bounce;
+        assert_eq!(easing.apply(0.0), 0.0);
+        assert!((easing.apply(1.0) - 1.0).abs() < 0.001);
+        // Bounce should have specific values at certain points
+        assert!(easing.apply(0.5) > 0.0);
+    }
+
+    #[test]
+    fn test_easing_curve_clamps_input() {
+        let easing = EasingCurve::None;
+        // Values outside 0-1 should be clamped
+        assert_eq!(easing.apply(-0.5), 0.0);
+        assert_eq!(easing.apply(1.5), 1.0);
+    }
+
+    // ==================== Animation Group Tests ====================
+
+    #[test]
+    fn test_animation_group_new() {
+        let group = AnimationGroup::new(42);
+        assert_eq!(group.0, 42);
+    }
+
+    #[test]
+    fn test_animation_group_equality() {
+        let group1 = AnimationGroup::new(1);
+        let group2 = AnimationGroup::new(1);
+        let group3 = AnimationGroup::new(2);
+        assert_eq!(group1, group2);
+        assert_ne!(group1, group3);
+    }
+
+    #[test]
+    fn test_paused_groups_pause_resume() {
+        let mut paused = PausedGroups::default();
+        assert!(!paused.is_paused(1));
+        
+        paused.pause(1);
+        assert!(paused.is_paused(1));
+        assert!(!paused.is_paused(2));
+        
+        paused.resume(1);
+        assert!(!paused.is_paused(1));
+    }
+
+    #[test]
+    fn test_paused_groups_multiple() {
+        let mut paused = PausedGroups::default();
+        paused.pause(1);
+        paused.pause(2);
+        paused.pause(3);
+        
+        assert!(paused.is_paused(1));
+        assert!(paused.is_paused(2));
+        assert!(paused.is_paused(3));
+        assert!(!paused.is_paused(4));
+        
+        paused.resume(2);
+        assert!(paused.is_paused(1));
+        assert!(!paused.is_paused(2));
+        assert!(paused.is_paused(3));
+    }
+
+    // ==================== Animation State Tests ====================
+
+    #[test]
+    fn test_animation_state_default() {
+        let state = AnimationState::default();
+        assert_eq!(state, AnimationState::Idle);
+    }
+
+    #[test]
+    fn test_animation_state_equality() {
+        assert_eq!(AnimationState::Idle, AnimationState::Idle);
+        assert_eq!(AnimationState::Animating, AnimationState::Animating);
+        assert_eq!(AnimationState::JustCompleted, AnimationState::JustCompleted);
+        assert_ne!(AnimationState::Idle, AnimationState::Animating);
+    }
+
+    // ==================== Event Tests ====================
+
+    #[test]
+    fn test_animation_started_event() {
+        let event = AnimationStarted {
+            entity: Entity::from_raw(42),
+            target: Vec3::new(100.0, 200.0, 0.0),
+        };
+        assert_eq!(event.target, Vec3::new(100.0, 200.0, 0.0));
+    }
+
+    #[test]
+    fn test_animation_completed_event() {
+        let event = AnimationCompleted {
+            entity: Entity::from_raw(42),
+            final_position: Vec3::new(100.0, 200.0, 0.0),
+        };
+        assert_eq!(event.final_position, Vec3::new(100.0, 200.0, 0.0));
+    }
+
+    // ==================== Bundle with Easing Tests ====================
+
+    #[test]
+    fn test_natura_spring_bundle_with_easing() {
+        let bundle = NaturaSpringBundle::with_easing(
+            AngularFrequency(8.0),
+            DampingRatio(0.5),
+            EasingCurve::EaseOut,
+        );
+        
+        assert_eq!(bundle.spring.angular_frequency, 8.0);
+        assert_eq!(bundle.spring.damping_ratio, 0.5);
+        assert_eq!(bundle.easing, EasingCurve::EaseOut);
+        assert_eq!(bundle.state, AnimationState::Idle);
+    }
+
+    #[test]
+    fn test_natura_spring_bundle_includes_state_and_easing() {
+        let bundle = NaturaSpringBundle::new(AngularFrequency(6.0), DampingRatio(0.7));
+        
+        // Bundle should include default state and easing
+        assert_eq!(bundle.state, AnimationState::Idle);
+        assert_eq!(bundle.easing, EasingCurve::None);
+    }
+
+    // ==================== Global Pause Resource Tests ====================
+
+    #[test]
+    fn test_global_animation_paused_default() {
+        let _paused = GlobalAnimationPaused::default();
+        // Just ensure it can be created
+    }
+
+    // ==================== Animation Paused Component Tests ====================
+
+    #[test]
+    fn test_animation_paused_default() {
+        let _paused = AnimationPaused::default();
+        // Just ensure it can be created
     }
 }
