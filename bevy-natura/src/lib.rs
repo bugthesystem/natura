@@ -311,3 +311,354 @@ impl Plugin for NaturaAnimationPlugin {
 
 // Re-export natura types for convenience
 pub use natura::{AngularFrequency, DampingRatio, DeltaTime};
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    // ==================== NaturaSprite Tests ====================
+
+    #[test]
+    fn test_natura_sprite_new() {
+        let sprite = NaturaSprite::new(10.0, 20.0, 30.0);
+        assert_eq!(sprite.x, 10.0);
+        assert_eq!(sprite.y, 20.0);
+        assert_eq!(sprite.z, 30.0);
+        assert_eq!(sprite.x_velocity, 0.0);
+        assert_eq!(sprite.y_velocity, 0.0);
+        assert_eq!(sprite.z_velocity, 0.0);
+    }
+
+    #[test]
+    fn test_natura_sprite_new_2d() {
+        let sprite = NaturaSprite::new_2d(10.0, 20.0);
+        assert_eq!(sprite.x, 10.0);
+        assert_eq!(sprite.y, 20.0);
+        assert_eq!(sprite.z, 0.0);
+        assert_eq!(sprite.x_velocity, 0.0);
+        assert_eq!(sprite.y_velocity, 0.0);
+        assert_eq!(sprite.z_velocity, 0.0);
+    }
+
+    #[test]
+    fn test_natura_sprite_default() {
+        let sprite = NaturaSprite::default();
+        assert_eq!(sprite.x, 0.0);
+        assert_eq!(sprite.y, 0.0);
+        assert_eq!(sprite.z, 0.0);
+        assert_eq!(sprite.x_velocity, 0.0);
+        assert_eq!(sprite.y_velocity, 0.0);
+        assert_eq!(sprite.z_velocity, 0.0);
+    }
+
+    #[test]
+    fn test_natura_sprite_is_at_rest_true() {
+        let sprite = NaturaSprite {
+            x: 100.0,
+            y: 100.0,
+            z: 0.0,
+            x_velocity: 0.001,
+            y_velocity: 0.001,
+            z_velocity: 0.001,
+        };
+        assert!(sprite.is_at_rest(0.01));
+    }
+
+    #[test]
+    fn test_natura_sprite_is_at_rest_false() {
+        let sprite = NaturaSprite {
+            x: 100.0,
+            y: 100.0,
+            z: 0.0,
+            x_velocity: 1.0,
+            y_velocity: 0.0,
+            z_velocity: 0.0,
+        };
+        assert!(!sprite.is_at_rest(0.01));
+    }
+
+    #[test]
+    fn test_natura_sprite_is_at_rest_all_axes() {
+        // X velocity too high
+        let sprite_x = NaturaSprite {
+            x: 0.0, y: 0.0, z: 0.0,
+            x_velocity: 1.0, y_velocity: 0.0, z_velocity: 0.0,
+        };
+        assert!(!sprite_x.is_at_rest(0.5));
+
+        // Y velocity too high
+        let sprite_y = NaturaSprite {
+            x: 0.0, y: 0.0, z: 0.0,
+            x_velocity: 0.0, y_velocity: 1.0, z_velocity: 0.0,
+        };
+        assert!(!sprite_y.is_at_rest(0.5));
+
+        // Z velocity too high
+        let sprite_z = NaturaSprite {
+            x: 0.0, y: 0.0, z: 0.0,
+            x_velocity: 0.0, y_velocity: 0.0, z_velocity: 1.0,
+        };
+        assert!(!sprite_z.is_at_rest(0.5));
+    }
+
+    #[test]
+    fn test_natura_sprite_clone() {
+        let sprite = NaturaSprite::new(1.0, 2.0, 3.0);
+        let cloned = sprite.clone();
+        assert_eq!(sprite.x, cloned.x);
+        assert_eq!(sprite.y, cloned.y);
+        assert_eq!(sprite.z, cloned.z);
+    }
+
+    // ==================== NaturaTarget Tests ====================
+
+    #[test]
+    fn test_natura_target_new() {
+        let target = NaturaTarget::new(10.0, 20.0, 30.0);
+        assert_eq!(target.x, 10.0);
+        assert_eq!(target.y, 20.0);
+        assert_eq!(target.z, 30.0);
+    }
+
+    #[test]
+    fn test_natura_target_new_2d() {
+        let target = NaturaTarget::new_2d(10.0, 20.0);
+        assert_eq!(target.x, 10.0);
+        assert_eq!(target.y, 20.0);
+        assert_eq!(target.z, 0.0);
+    }
+
+    #[test]
+    fn test_natura_target_default() {
+        let target = NaturaTarget::default();
+        assert_eq!(target.x, 0.0);
+        assert_eq!(target.y, 0.0);
+        assert_eq!(target.z, 0.0);
+    }
+
+    #[test]
+    fn test_natura_target_clone() {
+        let target = NaturaTarget::new(1.0, 2.0, 3.0);
+        let cloned = target.clone();
+        assert_eq!(target.x, cloned.x);
+        assert_eq!(target.y, cloned.y);
+        assert_eq!(target.z, cloned.z);
+    }
+
+    // ==================== NaturaSpring Tests ====================
+
+    #[test]
+    fn test_natura_spring_new() {
+        let spring = NaturaSpring::new(AngularFrequency(8.0), DampingRatio(0.5));
+        assert_eq!(spring.angular_frequency, 8.0);
+        assert_eq!(spring.damping_ratio, 0.5);
+    }
+
+    #[test]
+    fn test_natura_spring_default() {
+        let spring = NaturaSpring::default();
+        assert_eq!(spring.angular_frequency, 6.0);
+        assert_eq!(spring.damping_ratio, 0.7);
+    }
+
+    #[test]
+    fn test_natura_spring_clone() {
+        let spring = NaturaSpring::new(AngularFrequency(10.0), DampingRatio(0.3));
+        let cloned = spring.clone();
+        assert_eq!(spring.angular_frequency, cloned.angular_frequency);
+        assert_eq!(spring.damping_ratio, cloned.damping_ratio);
+    }
+
+    #[test]
+    fn test_natura_spring_update() {
+        let mut spring = NaturaSpring::new(AngularFrequency(6.0), DampingRatio(0.7));
+        let delta_seconds = 1.0 / 60.0; // 60 FPS
+        
+        // Starting at position 0 with no velocity, target at 100
+        let (new_pos, new_vel) = spring.update(0.0, 0.0, 100.0, delta_seconds);
+        
+        // Position should move towards target
+        assert!(new_pos > 0.0);
+        // Velocity should be positive (moving towards target)
+        assert!(new_vel > 0.0);
+    }
+
+    #[test]
+    fn test_natura_spring_update_at_target() {
+        let mut spring = NaturaSpring::new(AngularFrequency(6.0), DampingRatio(1.0));
+        let delta_seconds = 1.0 / 60.0;
+        
+        // Already at target with no velocity
+        let (new_pos, new_vel) = spring.update(100.0, 0.0, 100.0, delta_seconds);
+        
+        // Should stay at target
+        assert!((new_pos - 100.0).abs() < 0.001);
+        assert!(new_vel.abs() < 0.001);
+    }
+
+    // ==================== NaturaSpringBundle Tests ====================
+
+    #[test]
+    fn test_natura_spring_bundle_new() {
+        let bundle = NaturaSpringBundle::new(AngularFrequency(8.0), DampingRatio(0.5));
+        
+        // Check spring parameters
+        assert_eq!(bundle.spring.angular_frequency, 8.0);
+        assert_eq!(bundle.spring.damping_ratio, 0.5);
+        
+        // Check sprite is at default position
+        assert_eq!(bundle.sprite.x, 0.0);
+        assert_eq!(bundle.sprite.y, 0.0);
+        assert_eq!(bundle.sprite.z, 0.0);
+    }
+
+    #[test]
+    fn test_natura_spring_bundle_with_position() {
+        let bundle = NaturaSpringBundle::with_position(
+            AngularFrequency(8.0),
+            DampingRatio(0.5),
+            10.0,
+            20.0,
+            30.0,
+        );
+        
+        // Check spring parameters
+        assert_eq!(bundle.spring.angular_frequency, 8.0);
+        assert_eq!(bundle.spring.damping_ratio, 0.5);
+        
+        // Check sprite position
+        assert_eq!(bundle.sprite.x, 10.0);
+        assert_eq!(bundle.sprite.y, 20.0);
+        assert_eq!(bundle.sprite.z, 30.0);
+    }
+
+    #[test]
+    fn test_natura_spring_bundle_default() {
+        let bundle = NaturaSpringBundle::default();
+        
+        // Check default spring parameters
+        assert_eq!(bundle.spring.angular_frequency, 6.0);
+        assert_eq!(bundle.spring.damping_ratio, 0.7);
+        
+        // Check sprite is at origin
+        assert_eq!(bundle.sprite.x, 0.0);
+        assert_eq!(bundle.sprite.y, 0.0);
+        assert_eq!(bundle.sprite.z, 0.0);
+    }
+
+    // ==================== Spring Animation Behavior Tests ====================
+
+    #[test]
+    fn test_spring_converges_to_target() {
+        let mut spring = NaturaSpring::new(AngularFrequency(6.0), DampingRatio(0.7));
+        let delta_seconds = 1.0 / 60.0;
+        let target = 100.0;
+        
+        let mut pos = 0.0;
+        let mut vel = 0.0;
+        
+        // Simulate 5 seconds (300 frames at 60 FPS)
+        for _ in 0..300 {
+            let (new_pos, new_vel) = spring.update(pos, vel, target, delta_seconds);
+            pos = new_pos;
+            vel = new_vel;
+        }
+        
+        // Should be very close to target after 5 seconds
+        assert!((pos - target).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_under_damped_spring_oscillates() {
+        let mut spring = NaturaSpring::new(AngularFrequency(6.0), DampingRatio(0.3));
+        let delta_seconds = 1.0 / 60.0;
+        let target = 100.0;
+        
+        let mut pos = 0.0;
+        let mut vel = 0.0;
+        let mut max_pos = 0.0;
+        
+        // Simulate for a while and track max position
+        for _ in 0..120 {
+            let (new_pos, new_vel) = spring.update(pos, vel, target, delta_seconds);
+            pos = new_pos;
+            vel = new_vel;
+            if pos > max_pos {
+                max_pos = pos;
+            }
+        }
+        
+        // Under-damped spring should overshoot the target
+        assert!(max_pos > target);
+    }
+
+    #[test]
+    fn test_critically_damped_no_overshoot() {
+        let mut spring = NaturaSpring::new(AngularFrequency(6.0), DampingRatio(1.0));
+        let delta_seconds = 1.0 / 60.0;
+        let target = 100.0;
+        
+        let mut pos = 0.0;
+        let mut vel = 0.0;
+        let mut max_pos = 0.0;
+        
+        // Simulate for a while
+        for _ in 0..300 {
+            let (new_pos, new_vel) = spring.update(pos, vel, target, delta_seconds);
+            pos = new_pos;
+            vel = new_vel;
+            if pos > max_pos {
+                max_pos = pos;
+            }
+        }
+        
+        // Critically damped spring should not significantly overshoot
+        assert!(max_pos <= target + 0.5);
+    }
+
+    // ==================== From Trait Tests ====================
+
+    #[test]
+    fn test_natura_sprite_from_natura_sprite_core() {
+        let core_sprite = natura::Sprite {
+            x: 10.0,
+            x_velocity: 1.0,
+            y: 20.0,
+            y_velocity: 2.0,
+        };
+        
+        let sprite: NaturaSprite = core_sprite.into();
+        
+        assert_eq!(sprite.x, 10.0);
+        assert_eq!(sprite.x_velocity, 1.0);
+        assert_eq!(sprite.y, 20.0);
+        assert_eq!(sprite.y_velocity, 2.0);
+        assert_eq!(sprite.z, 0.0);
+        assert_eq!(sprite.z_velocity, 0.0);
+    }
+
+    // ==================== Debug Trait Tests ====================
+
+    #[test]
+    fn test_natura_sprite_debug() {
+        let sprite = NaturaSprite::new(1.0, 2.0, 3.0);
+        let debug_str = format!("{:?}", sprite);
+        assert!(debug_str.contains("NaturaSprite"));
+    }
+
+    #[test]
+    fn test_natura_spring_debug() {
+        let spring = NaturaSpring::new(AngularFrequency(6.0), DampingRatio(0.7));
+        let debug_str = format!("{:?}", spring);
+        assert!(debug_str.contains("NaturaSpring"));
+        assert!(debug_str.contains("angular_frequency"));
+        assert!(debug_str.contains("damping_ratio"));
+    }
+
+    #[test]
+    fn test_natura_target_debug() {
+        let target = NaturaTarget::new(1.0, 2.0, 3.0);
+        let debug_str = format!("{:?}", target);
+        assert!(debug_str.contains("NaturaTarget"));
+    }
+}
