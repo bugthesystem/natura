@@ -5,7 +5,7 @@ An opinionated, simple and efficient spring animation library for smooth, natura
 
 ## Usage
 
-Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs#L138) with your settings to initialize and [`update`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs#L171) on each frame to animate.
+Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs) with your settings to initialize and [`update`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs) on each frame to animate.
 
 For details, see the [examples](/examples)
 
@@ -19,10 +19,12 @@ For details, see the [examples](/examples)
 
 **Enable Plugin and Spawn Multiple Sprites:**
 
+The Bevy plugin now uses Bevy's `Time` resource for frame-rate independent animation. No need to specify a delta time - the plugin handles it automatically!
+
 ```rust
 use bevy::prelude::*;
 use bevy_natura::{NaturaAnimationPlugin, NaturaSpringBundle, NaturaTarget};
-use natura::{AngularFrequency, DampingRatio, DeltaTime};
+use natura::{AngularFrequency, DampingRatio};
 
 fn main() {
     App::new()
@@ -39,22 +41,20 @@ fn setup(mut commands: Commands) {
     commands.spawn((
         Text2d::new("First sprite"),
         NaturaSpringBundle::new(
-            DeltaTime(60.0),
             AngularFrequency(6.0),
             DampingRatio(0.7),
         ),
-        NaturaTarget { x: 100.0, y: 50.0 },
+        NaturaTarget::new_2d(100.0, 50.0),
     ));
     
-    // Spawn second animated entity with different spring settings
+    // Spawn second animated entity with bouncy spring (low damping)
     commands.spawn((
         Text2d::new("Second sprite - bouncy!"),
         NaturaSpringBundle::new(
-            DeltaTime(60.0),
             AngularFrequency(8.0),
-            DampingRatio(0.3), // More bouncy
+            DampingRatio(0.3), // Under-damped: bouncy oscillation
         ),
-        NaturaTarget { x: -100.0, y: -50.0 },
+        NaturaTarget::new_2d(-100.0, -50.0),
     ));
 }
 ```
@@ -106,7 +106,7 @@ fn main() {
 
 * **Time Delta:** the time step to operate on. Game engines typically provide
   a way to determine the time delta, however if that's not available you can
-  simply set the framerate with the included [`fps(u64)`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs#L105) utility function. Make
+  simply set the framerate with the included [`fps(u64)`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs) utility function. Make
   the framerate you set here matches your actual framerate.
 * **Angular Velocity:** this translates roughly to the speed. Higher values are
   faster.

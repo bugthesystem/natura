@@ -1,7 +1,7 @@
 use bevy::diagnostic::{FrameTimeDiagnosticsPlugin, LogDiagnosticsPlugin};
 use bevy::prelude::*;
 use bevy_natura::{NaturaAnimationPlugin, NaturaSpringBundle, NaturaTarget};
-use natura::{AngularFrequency, DampingRatio, DeltaTime};
+use natura::{AngularFrequency, DampingRatio};
 
 fn main() {
     App::new()
@@ -18,6 +18,7 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
     commands.spawn(Camera2d::default());
 
     // Spawn first animated text - moves to top-right
+    // Uses default damping for smooth motion
     commands.spawn((
         Text2d::new("Natura: First sprite!"),
         TextFont {
@@ -27,14 +28,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         TextColor(Color::WHITE),
         NaturaSpringBundle::new(
-            DeltaTime(60.0),
             AngularFrequency(6.0),
             DampingRatio(0.7),
         ),
-        NaturaTarget { x: 200.0, y: 150.0 },
+        NaturaTarget::new_2d(200.0, 150.0),
     ));
 
-    // Spawn second animated text - moves to bottom-left with different spring settings
+    // Spawn second animated text - moves to bottom-left with bouncy spring
+    // Low damping ratio (0.3) creates oscillating/bouncy motion
     commands.spawn((
         Text2d::new("Second sprite - bouncy!"),
         TextFont {
@@ -44,14 +45,14 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         TextColor(Color::srgb(0.5, 1.0, 0.5)),
         NaturaSpringBundle::new(
-            DeltaTime(60.0),
             AngularFrequency(8.0),
-            DampingRatio(0.3), // More bouncy
+            DampingRatio(0.3), // Under-damped: bouncy oscillation
         ),
-        NaturaTarget { x: -200.0, y: -100.0 },
+        NaturaTarget::new_2d(-200.0, -100.0),
     ));
 
     // Spawn third animated text - moves slowly to center-bottom
+    // Critically damped (1.0) reaches target as fast as possible without oscillation
     commands.spawn((
         Text2d::new("Third - smooth"),
         TextFont {
@@ -61,10 +62,9 @@ fn setup(mut commands: Commands, asset_server: Res<AssetServer>) {
         },
         TextColor(Color::srgb(1.0, 0.5, 0.5)),
         NaturaSpringBundle::new(
-            DeltaTime(60.0),
             AngularFrequency(3.0),
-            DampingRatio(1.0), // Critically damped - no bounce
+            DampingRatio(1.0), // Critically damped: no bounce, fastest to target
         ),
-        NaturaTarget { x: 0.0, y: -200.0 },
+        NaturaTarget::new_2d(0.0, -200.0),
     ));
 }
