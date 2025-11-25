@@ -5,7 +5,7 @@ An opinionated, simple and efficient spring animation library for smooth, natura
 
 ## Usage
 
-Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L138) with your settings to initialize and [`update`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L171) on each frame to animate.
+Natura is framework-agnostic and works well in 2D and 3D contexts. Simply call [`Spring::new`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs#L138) with your settings to initialize and [`update`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs#L171) on each frame to animate.
 
 For details, see the [examples](/examples)
 
@@ -17,20 +17,49 @@ For details, see the [examples](/examples)
 #### Example with [`Bevy Engine`](https://github.com/bevyengine/bevy)
 `cargo run -p bevy-simple`  
 
-**Enable Plugin:**
+**Enable Plugin and Spawn Multiple Sprites:**
 
 ```rust
-use bevy_natura::{NaturaAnimationBundle, NaturaAnimationPlugin};
+use bevy::prelude::*;
+use bevy_natura::{NaturaAnimationPlugin, NaturaSpringBundle, NaturaTarget};
+use natura::{AngularFrequency, DampingRatio, DeltaTime};
 
-// omitted for brevity
- .add_plugin(NaturaAnimationPlugin::new(
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins)
+        .add_plugins(NaturaAnimationPlugin)
+        .add_systems(Startup, setup)
+        .run();
+}
+
+fn setup(mut commands: Commands) {
+    commands.spawn(Camera2d::default());
+    
+    // Spawn first animated entity
+    commands.spawn((
+        Text2d::new("First sprite"),
+        NaturaSpringBundle::new(
             DeltaTime(60.0),
             AngularFrequency(6.0),
             DampingRatio(0.7),
-        ))
+        ),
+        NaturaTarget { x: 100.0, y: 50.0 },
+    ));
+    
+    // Spawn second animated entity with different spring settings
+    commands.spawn((
+        Text2d::new("Second sprite - bouncy!"),
+        NaturaSpringBundle::new(
+            DeltaTime(60.0),
+            AngularFrequency(8.0),
+            DampingRatio(0.3), // More bouncy
+        ),
+        NaturaTarget { x: -100.0, y: -50.0 },
+    ));
+}
 ```
 
-Please see usage [here](https://github.com/ziyasal/natura/blob/main/examples/bevy-simple/src/main.rs#L44)
+Please see full usage [here](https://github.com/bugthesystem/natura/blob/main/examples/bevy-simple/src/main.rs)
 
 #### Simple example
 
@@ -77,7 +106,7 @@ fn main() {
 
 * **Time Delta:** the time step to operate on. Game engines typically provide
   a way to determine the time delta, however if that's not available you can
-  simply set the framerate with the included [`fps(u64)`](https://github.com/ziyasal/natura/blob/main/natura/src/spring.rs#L105) utility function. Make
+  simply set the framerate with the included [`fps(u64)`](https://github.com/bugthesystem/natura/blob/main/natura/src/spring.rs#L105) utility function. Make
   the framerate you set here matches your actual framerate.
 * **Angular Velocity:** this translates roughly to the speed. Higher values are
   faster.
@@ -118,6 +147,6 @@ and published in 2012. [Ryan’s writeup][writeup] on the subject is fantastic.
 
 ## License
 
-[UNLICENSE](https://github.com/ziyasal/pmecs/blob/main/LICENSE)
+[UNLICENSE](https://github.com/bugthesystem/natura/blob/main/LICENSE)
 
 > _This crate is developed to be part of Λ.R.Ξ.N.Λ 2D game engine._
